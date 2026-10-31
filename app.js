@@ -33,17 +33,33 @@ function focusPage(){return card('專注計時器',`<div class="stat" id="clock"
 function fmt(s){return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
 function scoresPage(){let bySub=subjects.map(s=>{let a=state.attempts.filter(x=>x.subject===s);return {s,n:a.length,p:a.length?Math.round(a.filter(x=>x.correct).length/a.length*100):0}});return card('各科練習正確率',bySub.map(x=>`<div class="listitem"><div class="row spread"><b>${x.s}</b><span class="hint">${x.n} 題 · ${x.p}%</span></div><div class="bar"><div style="width:${x.p}%"></div></div></div>`).join(''))+card('新增模考成績',`<form id="score-form" class="row"><select class="field" name="subject">${subjects.map(x=>`<option>${x}</option>`).join('')}</select><input class="field" type="number" name="score" min="0" max="100" placeholder="原始分數 0-100" required><input class="field" type="date" name="date" value="${today()}"><button class="btn">新增</button></form><p class="hint">此處記錄原始分數，不自動換算級分。</p>`)+card('模考紀錄',state.scores.slice().reverse().map(x=>`<div class="listitem">${esc(x.date)} · ${esc(x.subject)} · ${x.score} 分</div>`).join('')||empty('尚無模考紀錄'));}
 function roomPage(){let notes=members.flatMap(m=>(m.data?.notes||[]).map(n=>({...n,author:m.name}))).sort((a,b)=>b.created.localeCompare(a.created));return card('分享筆記／共同挑戰',`<form id="note-form" class="stack"><input name="title" class="field wide" placeholder="標題" maxlength="100" required><textarea name="body" class="field wide" placeholder="筆記內容或本週挑戰" maxlength="3000" required></textarea><button class="btn">發布到三人讀書室</button></form>`)+card('共享內容',notes.map(n=>`<div class="listitem"><b>${esc(n.title)}</b><p class="hint">${esc(n.author)} · ${esc(n.created.slice(0,10))}</p><p style="white-space:pre-wrap">${esc(n.body)}</p></div>`).join('')||empty('尚無共享筆記'));}
-function rankingPage(){
-  const ranked = members.map(m => ({
-    name: m.name,
-    points: (m.data && m.data.points) || 0,
-    answers: (m.data && m.data.attempts && m.data.attempts.length) || 0
-  })).sort((a,b) => b.points-a.points);
-  const description = '<p class="hint">積分規則：作答 +2，答對額外 +3，完成任務 +10，複習單字 +1。此版為累積積分，週榜待升級。</p>';
-  const rows = ranked.map((m,i) => {
-    return '<div class="listitem row spread"><b>' + (i+1) + '. ' + esc(m.name) + '</b><span>' + m.points + ' 分 · ' + m.answers + ' 題</span></div>';
+function rankingPage() {
+  const ranked = members
+    .map(m => ({
+      name: m.name,
+      points: m.data?.points || 0,
+      answers: m.data?.attempts?.length || 0
+    }))
+    .sort((a, b) => b.points - a.points);
+
+  const rows = ranked.map((m, i) => {
+    return `
+      <div class="listitem row spread">
+        <b>${i + 1}. ${esc(m.name)}</b>
+        <span>${m.points} 分 · ${m.answers} 題</span>
+      </div>
+    `;
   }).join('');
-  return card('三人排行榜', description + (rows || empty('尚未取得成員資料')));
+
+  const content = `
+    <p class="hint">
+      積分規則：作答 +2，答對額外 +3，
+      完成任務 +10，複習單字 +1。
+    </p>
+    ${rows || empty('尚未取得成員資料')}
+  `;
+
+  return card('三人排行榜', content);
 }
 function settingsPage(){return card('我的帳號',`<p>登入 Email：${esc(user.email)}</p><p>顯示名稱：${esc(profile.name||'尚未設定')}</p><form id="profile-form" class="row"><input class="field" name="name" maxlength="30" placeholder="顯示名稱" value="${esc(profile.name||'')}"><button class="btn">儲存名稱</button></form>`)+card('系統資訊',`<p class="hint">網站版本：1.0.0 MVP。Firebase Authentication + Firestore + GitHub Pages。</p><p class="hint">使用資料為示範內容。官方歷屆試題與高中英文詞彙表需依授權與資料格式另外匯入。</p><p><a href="https://www.ceec.edu.tw/" target="_blank" rel="noopener noreferrer">大考中心官方網站</a></p>`);}
 async function save(){if(!user)return;try{await setDoc(doc(db,'users',user.uid),{name:profile.name||user.email,data:state,updatedAt:dateTime()},{merge:true});}catch(e){alert('資料儲存失敗：'+e.message);}}
