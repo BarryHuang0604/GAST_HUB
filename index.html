@@ -1,0 +1,13 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#183B63"><title>GSAT HUB</title><link rel="stylesheet" href="style.css?v=1.2.0"></head><body><div id="app"><div class="loading">GSAT HUB 載入中…</div></div><script>
+window.addEventListener('error', function(e) {
+  const el = document.querySelector('#app');
+  if (el && el.textContent.includes('載入中')) {
+    el.innerHTML = '<main style="max-width:650px;margin:70px auto;padding:24px;font-family:sans-serif"><h2>GSAT HUB 啟動失敗</h2><p>請開啟 Safari 開發者工具的主控台，複製紅色錯誤訊息。</p><pre id="startup-error" style="white-space:pre-wrap"></pre></main>';
+    document.querySelector('#startup-error').textContent = e.message + ' (' + (e.filename || '') + ':' + (e.lineno || '') + ')';
+  }
+});
+window.addEventListener('unhandledrejection', function(e) {
+  const el = document.querySelector('#app');
+  if (el && el.textContent.includes('載入中')) el.textContent = 'GSAT HUB 啟動失敗：' + String(e.reason);
+});
+</script><script type="module" src="app.js?v=1.2.0"></script></body></html>
